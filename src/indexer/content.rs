@@ -131,7 +131,8 @@ mod tests {
 
         assert!(preview.is_some());
         let preview = preview.unwrap();
-        assert_eq!(preview.word_count, 8);
+        // Count: Hello, world, This, is, a, test, With, multiple, lines = 9 words
+        assert_eq!(preview.word_count, 9);
         assert_eq!(preview.line_count, 3);
     }
 

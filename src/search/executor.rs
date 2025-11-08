@@ -226,8 +226,12 @@ mod tests {
         fs::write(root.join("other.rs"), "content3").unwrap();
 
         let db = Arc::new(Database::in_memory(10).unwrap());
-        let config = Arc::new(SearchConfig::default());
-        let filter = Arc::new(ExclusionFilter::default());
+        // Enable hidden files indexing since temp dirs often start with a dot
+        let mut config = SearchConfig::default();
+        config.index_hidden_files = true;
+        let config = Arc::new(config);
+        // Use empty exclusion filter to avoid any pattern matching issues
+        let filter = Arc::new(ExclusionFilter::from_patterns(&[]).unwrap());
 
         let builder = IndexBuilder::new(db.clone(), config.clone(), filter);
         builder.build(root, None).unwrap();
@@ -240,7 +244,7 @@ mod tests {
         let query = Query::new("test".to_string());
         let results = executor.execute(&query).unwrap();
 
-        assert!(!results.is_empty());
+        assert!(!results.is_empty(), "Expected at least one search result");
     }
 
     #[test]
@@ -252,8 +256,12 @@ mod tests {
         fs::write(root.join("file2.rs"), "content2").unwrap();
 
         let db = Arc::new(Database::in_memory(10).unwrap());
-        let config = Arc::new(SearchConfig::default());
-        let filter = Arc::new(ExclusionFilter::default());
+        // Enable hidden files indexing since temp dirs often start with a dot
+        let mut config = SearchConfig::default();
+        config.index_hidden_files = true;
+        let config = Arc::new(config);
+        // Use empty exclusion filter to avoid any pattern matching issues
+        let filter = Arc::new(ExclusionFilter::from_patterns(&[]).unwrap());
 
         let builder = IndexBuilder::new(db.clone(), config.clone(), filter);
         builder.build(root, None).unwrap();
@@ -266,7 +274,7 @@ mod tests {
         let query = Query::new("file".to_string()).with_extensions(vec!["rs".to_string()]);
         let results = executor.execute(&query).unwrap();
 
-        assert_eq!(results.len(), 1);
+        assert_eq!(results.len(), 1, "Expected exactly one search result");
         assert_eq!(results[0].file.name, "file2.rs");
     }
 }

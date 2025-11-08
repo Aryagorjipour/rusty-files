@@ -35,15 +35,20 @@ impl DirectoryWalker {
                 Ok(entry) => {
                     let path = entry.path();
 
-                    if self.is_cyclic(path) {
-                        continue;
-                    }
-
                     if !self.should_index(path) {
                         continue;
                     }
 
-                    self.visited.insert(path.to_path_buf());
+                    if self.is_cyclic(path) {
+                        continue;
+                    }
+
+                    // Insert canonical path to match is_cyclic check
+                    if let Ok(canonical) = dunce::canonicalize(path) {
+                        self.visited.insert(canonical);
+                    } else {
+                        self.visited.insert(path.to_path_buf());
+                    }
                     paths.push(path.to_path_buf());
                 }
                 Err(e) => {
@@ -74,15 +79,20 @@ impl DirectoryWalker {
             .filter_map(|entry| {
                 let path = entry.path();
 
-                if self.is_cyclic(path) {
-                    return None;
-                }
-
                 if !self.should_index(path) {
                     return None;
                 }
 
-                self.visited.insert(path.to_path_buf());
+                if self.is_cyclic(path) {
+                    return None;
+                }
+
+                // Insert canonical path to match is_cyclic check
+                if let Ok(canonical) = dunce::canonicalize(path) {
+                    self.visited.insert(canonical);
+                } else {
+                    self.visited.insert(path.to_path_buf());
+                }
                 Some(path.to_path_buf())
             })
             .collect();
@@ -153,35 +163,50 @@ mod tests {
         fs::write(root.join("file1.txt"), "content").unwrap();
         fs::write(root.join("dir1/file2.txt"), "content").unwrap();
 
-        let config = Arc::new(SearchConfig::default());
-        let filter = Arc::new(ExclusionFilter::default());
+        // Enable hidden files indexing since temp dirs often start with a dot
+        let mut config = SearchConfig::default();
+        config.index_hidden_files = true;
+        let config = Arc::new(config);
+        // Use empty exclusion filter to avoid any pattern matching issues
+        let filter = Arc::new(ExclusionFilter::from_patterns(&[]).unwrap());
         let walker = DirectoryWalker::new(config, filter);
 
         let paths = walker.walk(root).unwrap();
-        assert!(!paths.is_empty());
+        assert!(!paths.is_empty(), "Expected at least 2 files but found {}", paths.len());
+        assert_eq!(paths.len(), 2, "Expected exactly 2 files");
     }
 
     #[test]
     fn test_hidden_file_exclusion() {
         let temp_dir = TempDir::new().unwrap();
-        let root = temp_dir.path();
+        // Create a subdirectory that doesn't start with a dot to avoid issues with temp dir names
+        let test_root = temp_dir.path().join("test_dir");
+        fs::create_dir(&test_root).unwrap();
 
-        fs::write(root.join(".hidden"), "content").unwrap();
-        fs::write(root.join("visible.txt"), "content").unwrap();
+        fs::write(test_root.join(".hidden"), "content").unwrap();
+        fs::write(test_root.join("visible.txt"), "content").unwrap();
 
+        // First test with hidden files enabled to make sure they're both indexed
+        let mut config = SearchConfig::default();
+        config.index_hidden_files = true;
+        let config_all = Arc::new(config);
+        let filter = Arc::new(ExclusionFilter::from_patterns(&[]).unwrap());
+        let walker_all = DirectoryWalker::new(config_all, filter.clone());
+        let all_paths = walker_all.walk(&test_root).unwrap();
+        assert_eq!(all_paths.len(), 2, "Expected both files when indexing hidden files");
+
+        // Now test with hidden files disabled
         let mut config = SearchConfig::default();
         config.index_hidden_files = false;
-
         let config = Arc::new(config);
-        let filter = Arc::new(ExclusionFilter::default());
         let walker = DirectoryWalker::new(config, filter);
 
-        let paths = walker.walk(root).unwrap();
-        let visible_count = paths
-            .iter()
-            .filter(|p| !is_hidden(p))
-            .count();
+        // Need to clear visited set from previous walk
+        walker.clear_visited();
 
-        assert!(visible_count > 0);
+        let paths = walker.walk(&test_root).unwrap();
+        // Should only get the visible file, not the hidden one
+        assert_eq!(paths.len(), 1, "Expected only visible file");
+        assert!(paths.iter().all(|p| !is_hidden(p)), "Should not have hidden files");
     }
 }
