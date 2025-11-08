@@ -217,18 +217,22 @@ mod tests {
         fs::write(root.join("file1.txt"), "content1").unwrap();
 
         let db = Arc::new(Database::in_memory(10).unwrap());
-        let config = Arc::new(SearchConfig::default());
-        let filter = Arc::new(ExclusionFilter::default());
+        // Enable hidden files indexing since temp dirs often start with a dot
+        let mut config = SearchConfig::default();
+        config.index_hidden_files = true;
+        let config = Arc::new(config);
+        // Use empty exclusion filter to avoid any pattern matching issues
+        let filter = Arc::new(ExclusionFilter::from_patterns(&[]).unwrap());
 
         let indexer = IncrementalIndexer::new(db.clone(), config, filter);
 
         let stats = indexer.update(root, None).unwrap();
-        assert!(stats.added > 0);
+        assert!(stats.added > 0, "Expected at least one file to be added");
 
         fs::write(root.join("file2.txt"), "content2").unwrap();
 
         let stats = indexer.update(root, None).unwrap();
-        assert!(stats.added > 0);
+        assert!(stats.added > 0, "Expected at least one file to be added on second update");
     }
 
     #[test]
@@ -240,17 +244,21 @@ mod tests {
         fs::write(&file_path, "content").unwrap();
 
         let db = Arc::new(Database::in_memory(10).unwrap());
-        let config = Arc::new(SearchConfig::default());
-        let filter = Arc::new(ExclusionFilter::default());
+        // Enable hidden files indexing since temp dirs often start with a dot
+        let mut config = SearchConfig::default();
+        config.index_hidden_files = true;
+        let config = Arc::new(config);
+        // Use empty exclusion filter to avoid any pattern matching issues
+        let filter = Arc::new(ExclusionFilter::from_patterns(&[]).unwrap());
 
         let indexer = IncrementalIndexer::new(db.clone(), config, filter);
 
         let stats = indexer.update(root, None).unwrap();
-        assert!(stats.added > 0);
+        assert!(stats.added > 0, "Expected at least one file to be added");
 
         fs::remove_file(&file_path).unwrap();
 
         let stats = indexer.update(root, None).unwrap();
-        assert!(stats.removed > 0);
+        assert!(stats.removed > 0, "Expected at least one file to be removed");
     }
 }

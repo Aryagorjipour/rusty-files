@@ -170,13 +170,18 @@ mod tests {
         fs::write(root.join("subdir/file3.txt"), "content3").unwrap();
 
         let db = Arc::new(Database::in_memory(10).unwrap());
-        let config = Arc::new(SearchConfig::default());
-        let filter = Arc::new(ExclusionFilter::default());
+        // Enable hidden files indexing since temp dirs often start with a dot
+        let mut config = SearchConfig::default();
+        config.index_hidden_files = true;
+        let config = Arc::new(config);
+        // Use empty exclusion filter to avoid any pattern matching issues
+        let filter = Arc::new(ExclusionFilter::from_patterns(&[]).unwrap());
 
         let builder = IndexBuilder::new(db.clone(), config, filter);
         let count = builder.build(root, None).unwrap();
 
         assert!(count > 0);
+        assert_eq!(count, 3, "Expected 3 files to be indexed");
     }
 
     #[test]

@@ -1,7 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rusty_files::{MatchMode, Query, SearchEngine};
 use std::fs;
-use std::path::PathBuf;
 use tempfile::TempDir;
 
 fn setup_indexed_engine(file_count: usize) -> (TempDir, SearchEngine) {
