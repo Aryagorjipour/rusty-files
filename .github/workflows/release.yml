@@ -1,0 +1,316 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Run tests and benchmarks
+  test:
+    name: Test and Benchmark
+    runs-on: ubuntu-latest
+    outputs:
+      benchmark_results: ${{ steps.benchmarks.outputs.results }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run tests
+        run: cargo test --all-features --verbose
+
+      - name: Run benchmarks
+        id: benchmarks
+        run: |
+          echo "Running benchmarks..."
+          cargo bench --no-fail-fast 2>&1 | tee bench_output.txt
+
+          # Extract benchmark results and format for release notes
+          echo "results<<EOF" >> $GITHUB_OUTPUT
+          echo "## Benchmark Results" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### Indexing Performance" >> $GITHUB_OUTPUT
+          echo "| Operation | Time (avg) | Throughput |" >> $GITHUB_OUTPUT
+          echo "|-----------|------------|------------|" >> $GITHUB_OUTPUT
+          grep -A 1 "indexing" bench_output.txt | grep "time:" | awk '{print "| Indexing | " $2 " " $3 " | - |"}' | head -1 >> $GITHUB_OUTPUT || echo "| Indexing | See full results | - |" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### Search Performance" >> $GITHUB_OUTPUT
+          echo "| Operation | Time (avg) |" >> $GITHUB_OUTPUT
+          echo "|-----------|------------|" >> $GITHUB_OUTPUT
+          grep -A 1 "searching" bench_output.txt | grep "time:" | awk '{print "| Searching | " $2 " " $3 " |"}' | head -1 >> $GITHUB_OUTPUT || echo "| Searching | See full results |" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "<details>" >> $GITHUB_OUTPUT
+          echo "<summary>Full Benchmark Output</summary>" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          cat bench_output.txt >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "</details>" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  # Build release binaries for multiple platforms
+  build:
+    name: Build - ${{ matrix.platform.target }}
+    needs: test
+    strategy:
+      matrix:
+        platform:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: linux-x86_64
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            name: macos-x86_64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            name: macos-arm64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            name: windows-x86_64
+    runs-on: ${{ matrix.platform.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.platform.target }}
+          override: true
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.platform.target }}
+
+      - name: Create release archive (Unix)
+        if: matrix.platform.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          tar -czf ../../../rusty-files-${{ matrix.platform.name }}.tar.gz filesearch
+          cd -
+
+      - name: Create release archive (Windows)
+        if: matrix.platform.os == 'windows-latest'
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          7z a ../../../rusty-files-${{ matrix.platform.name }}.zip filesearch.exe
+          cd -
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: rusty-files-${{ matrix.platform.name }}
+          path: |
+            rusty-files-*.tar.gz
+            rusty-files-*.zip
+
+  # Create GitHub Release
+  release:
+    name: Create Release
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          # Generate commit log
+          if [ -z "$PREV_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Save to output
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Extract features from README
+        id: features
+        run: |
+          echo "features<<EOF" >> $GITHUB_OUTPUT
+          echo "## Features" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          # Extract features section from README
+          sed -n '/## Features/,/## Installation/p' README.md | sed '$ d' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Check for CHANGELOG
+        id: changelog_file
+        run: |
+          if [ -f "CHANGELOG.md" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            # Extract the latest version section
+            echo "content<<EOF" >> $GITHUB_OUTPUT
+            # Try to extract the section for this version
+            VERSION="${{ steps.version.outputs.VERSION }}"
+            sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$ d' >> $GITHUB_OUTPUT || echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release notes
+        id: release_notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          # Rusty Files v${{ steps.version.outputs.VERSION }}
+
+          A high-performance, cross-platform file search engine library and CLI written in Rust.
+
+          ## Highlights
+
+          This release includes performance improvements, new features, and bug fixes.
+
+          ${{ steps.features.outputs.features }}
+
+          ## What's Changed
+
+          ${{ steps.changelog.outputs.commits }}
+
+          ${{ steps.changelog_file.outputs.content }}
+
+          ${{ needs.test.outputs.benchmark_results }}
+
+          ## Installation
+
+          ### Download Pre-built Binaries
+
+          Download the appropriate binary for your platform from the assets below.
+
+          #### Linux
+          ```bash
+          wget https://github.com/Aryagorjipour/rusty-files/releases/download/v${{ steps.version.outputs.VERSION }}/rusty-files-linux-x86_64.tar.gz
+          tar -xzf rusty-files-linux-x86_64.tar.gz
+          chmod +x filesearch
+          sudo mv filesearch /usr/local/bin/
+          ```
+
+          #### macOS
+          ```bash
+          # Intel Macs
+          wget https://github.com/Aryagorjipour/rusty-files/releases/download/v${{ steps.version.outputs.VERSION }}/rusty-files-macos-x86_64.tar.gz
+          tar -xzf rusty-files-macos-x86_64.tar.gz
+
+          # Apple Silicon Macs
+          wget https://github.com/Aryagorjipour/rusty-files/releases/download/v${{ steps.version.outputs.VERSION }}/rusty-files-macos-arm64.tar.gz
+          tar -xzf rusty-files-macos-arm64.tar.gz
+
+          chmod +x filesearch
+          sudo mv filesearch /usr/local/bin/
+          ```
+
+          #### Windows
+          Download `rusty-files-windows-x86_64.zip` and extract `filesearch.exe` to your desired location.
+
+          ### Install from crates.io
+
+          ```bash
+          cargo install rusty-files@${{ steps.version.outputs.VERSION }}
+          ```
+
+          ### Build from Source
+
+          ```bash
+          git clone https://github.com/Aryagorjipour/rusty-files.git
+          cd rusty-files
+          git checkout v${{ steps.version.outputs.VERSION }}
+          cargo build --release
+          ```
+
+          ## Quick Start
+
+          ```bash
+          # Index a directory
+          filesearch index /path/to/directory
+
+          # Search for files
+          filesearch search "*.rs"
+
+          # Interactive mode
+          filesearch interactive
+          ```
+
+          ## Documentation
+
+          - [GitHub Repository](https://github.com/Aryagorjipour/rusty-files)
+          - [README](https://github.com/Aryagorjipour/rusty-files/blob/main/README.md)
+
+          ## Full Changelog
+
+          **Full Changelog**: https://github.com/Aryagorjipour/rusty-files/compare/${{ github.event.before }}...${{ github.sha }}
+          EOF
+
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release_notes.md
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Release Created Successfully! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Release URL:** https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts Built:" >> $GITHUB_STEP_SUMMARY
+          echo "- Linux x86_64" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS x86_64" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS ARM64" >> $GITHUB_STEP_SUMMARY
+          echo "- Windows x86_64" >> $GITHUB_STEP_SUMMARY
