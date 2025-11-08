@@ -1,6 +1,6 @@
-use crate::core::types::{FileEntry, IndexStats, SearchResult};
-use crate::filters::{format_date, format_relative_date, format_size};
-use crate::indexer::{UpdateStats, VerificationStats};
+use rusty_files::core::types::{IndexStats, SearchResult};
+use rusty_files::filters::{format_date, format_relative_date, format_size};
+use rusty_files::indexer::{UpdateStats, VerificationStats};
 use colored::*;
 
 pub struct OutputFormatter {
@@ -72,7 +72,7 @@ impl OutputFormatter {
 
         if let Some(ref snippet) = result.snippet {
             if self.use_colors {
-                println!("  {}", snippet.bright_yellow());
+                println!("  {}", snippet.as_str().bright_yellow());
             } else {
                 println!("  {}", snippet);
             }

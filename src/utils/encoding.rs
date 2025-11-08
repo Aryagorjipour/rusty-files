@@ -52,7 +52,9 @@ pub fn is_likely_text(data: &[u8]) -> bool {
         .filter(|&&b| b < 32 && b != b'\n' && b != b'\r' && b != b'\t')
         .count();
 
-    control_count < sample_size / 20
+    // Allow at least 1 control character for small files, or 5% for larger files
+    let threshold = std::cmp::max(1, sample_size / 20);
+    control_count < threshold
 }
 
 pub fn is_utf8(data: &[u8]) -> bool {

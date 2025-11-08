@@ -1,6 +1,6 @@
-use crate::cli::output::OutputFormatter;
-use crate::core::{Result, SearchEngine};
-use crate::search::QueryParser;
+use crate::output::OutputFormatter;
+use rusty_files::core::{Result, SearchEngine};
+use rusty_files::search::QueryParser;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -40,7 +40,7 @@ impl CommandExecutor {
         };
 
         let pb_clone = progress_bar.clone();
-        let callback = move |progress: crate::core::types::Progress| {
+        let callback = move |progress: rusty_files::core::types::Progress| {
             if let Some(ref pb) = pb_clone {
                 pb.set_message(format!(
                     "{}/{} files ({}%)",
@@ -84,7 +84,7 @@ impl CommandExecutor {
         };
 
         let pb_clone = progress_bar.clone();
-        let callback = move |progress: crate::core::types::Progress| {
+        let callback = move |progress: rusty_files::core::types::Progress| {
             if let Some(ref pb) = pb_clone {
                 pb.set_message(format!("{}", progress.message));
             }
@@ -209,7 +209,7 @@ impl CommandExecutor {
 
         let output_str = if output_path.extension().and_then(|s| s.to_str()) == Some("json") {
             serde_json::to_string_pretty(&results)
-                .map_err(|e| crate::core::error::SearchError::Configuration(e.to_string()))?
+                .map_err(|e| rusty_files::core::error::SearchError::Configuration(e.to_string()))?
         } else {
             results
                 .iter()

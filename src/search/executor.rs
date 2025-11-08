@@ -12,8 +12,8 @@ use std::sync::Arc;
 pub struct SearchExecutor {
     database: Arc<Database>,
     config: Arc<SearchConfig>,
-    cache: Arc<LruCache>,
-    bloom_filter: Arc<FileBloomFilter>,
+    _cache: Arc<LruCache>,
+    _bloom_filter: Arc<FileBloomFilter>,
     ranker: ResultRanker,
 }
 
@@ -29,8 +29,8 @@ impl SearchExecutor {
         Self {
             database,
             config,
-            cache,
-            bloom_filter,
+            _cache: cache,
+            _bloom_filter: bloom_filter,
             ranker,
         }
     }

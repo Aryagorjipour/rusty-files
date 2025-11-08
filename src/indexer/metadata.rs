@@ -21,7 +21,6 @@ impl MetadataExtractor {
 
         #[cfg(unix)]
         {
-            use std::os::unix::fs::MetadataExt;
             entry.is_symlink = metadata.file_type().is_symlink();
         }
 

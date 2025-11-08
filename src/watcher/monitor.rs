@@ -5,13 +5,12 @@ use crate::storage::Database;
 use crate::watcher::debouncer::{EventDebouncer, FileEventType};
 use crate::watcher::synchronizer::{FileEvent, IndexSynchronizer};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
 pub struct FileSystemMonitor {
-    config: Arc<SearchConfig>,
     exclusion_filter: Arc<ExclusionFilter>,
     synchronizer: Arc<IndexSynchronizer>,
     debouncer: Arc<EventDebouncer>,
@@ -34,7 +33,6 @@ impl FileSystemMonitor {
         let debouncer = Arc::new(EventDebouncer::new(config.watch_debounce_ms));
 
         Self {
-            config,
             exclusion_filter,
             synchronizer,
             debouncer,

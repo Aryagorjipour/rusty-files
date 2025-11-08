@@ -8,7 +8,8 @@ pub struct MigrationManager;
 impl MigrationManager {
     pub fn initialize_schema(conn: &Connection) -> Result<()> {
         for pragma in schema::OPTIMIZE_PRAGMAS {
-            conn.execute(pragma, [])?;
+            // Use query_row() instead of execute() because PRAGMAs return results
+            let _ = conn.query_row(pragma, [], |_| Ok(()));
         }
 
         conn.execute(schema::CREATE_SCHEMA_VERSION_TABLE, [])?;
@@ -30,14 +31,15 @@ impl MigrationManager {
     }
 
     fn get_current_version(conn: &Connection) -> Result<i32> {
-        let version: rusqlite::Result<i32> = conn.query_row(
+        let version: rusqlite::Result<Option<i32>> = conn.query_row(
             "SELECT MAX(version) FROM schema_version",
             [],
             |row| row.get(0),
         );
 
         match version {
-            Ok(v) => Ok(v),
+            Ok(Some(v)) => Ok(v),
+            Ok(None) => Ok(0), // NULL from MAX means empty table
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(0),
             Err(e) => Err(SearchError::Database(e)),
         }
