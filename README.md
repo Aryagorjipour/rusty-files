@@ -1,9 +1,21 @@
-# Rusty Files
+<p align="center">
+  <img src="assets/RustyFiles-Logo.png" alt="Rusty Files Logo" width="300"/>
+</p>
 
-A high-performance, cross-platform file search engine library and CLI written in Rust.
+<h1 align="center">Rusty Files</h1>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org)
+<p align="center">
+  A high-performance, cross-platform file search engine library and CLI written in Rust.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Aryagorjipour/rusty-files/actions"><img src="https://github.com/Aryagorjipour/rusty-files/workflows/Rust/badge.svg" alt="Build Status"></a>
+  <a href="https://github.com/Aryagorjipour/rusty-files/releases"><img src="https://img.shields.io/github/v/release/Aryagorjipour/rusty-files" alt="Latest Release"></a>
+  <a href="https://crates.io/crates/rusty-files"><img src="https://img.shields.io/crates/v/rusty-files" alt="Crates.io"></a>
+  <a href="https://crates.io/crates/rusty-files"><img src="https://img.shields.io/crates/d/rusty-files" alt="Downloads"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-1.70%2B-blue.svg" alt="Rust 1.70+"></a>
+</p>
 
 ## Overview
 
