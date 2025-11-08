@@ -1,5 +1,4 @@
 use clap::{Parser, Subcommand};
-use rusty_files::prelude::*;
 use rusty_files::SearchEngine;
 use std::path::PathBuf;
 

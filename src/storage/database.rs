@@ -1,10 +1,10 @@
 use crate::core::error::{Result, SearchError};
 use crate::core::types::{ContentPreview, ExclusionRule, ExclusionRuleType, FileEntry, IndexStats};
 use crate::storage::migrations::MigrationManager;
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{TimeZone, Utc};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{params, OptionalExtension};
 use std::path::{Path, PathBuf};
 
 pub type DbPool = Pool<SqliteConnectionManager>;

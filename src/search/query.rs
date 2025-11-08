@@ -1,7 +1,6 @@
 use crate::core::error::{Result, SearchError};
 use crate::core::types::{DateFilter, MatchMode, SearchScope, SizeFilter};
 use crate::filters::{parse_relative_date, parse_size};
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone)]
 pub struct Query {

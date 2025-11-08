@@ -39,8 +39,7 @@ impl ResultRanker {
         let weights = ScoreWeights {
             name_match: 0.5,
             path_depth: 0.2,
-            recency: 0.15,
-            access_frequency: 0.15,
+            recency: 0.3,
         };
 
         weights.name_match * name_match_score
@@ -164,7 +163,6 @@ struct ScoreWeights {
     name_match: f64,
     path_depth: f64,
     recency: f64,
-    access_frequency: f64,
 }
 
 #[cfg(test)]

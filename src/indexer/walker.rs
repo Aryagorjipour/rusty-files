@@ -105,6 +105,11 @@ impl DirectoryWalker {
     }
 
     fn should_index(&self, path: &Path) -> bool {
+        // Only index files, not directories
+        if path.is_dir() {
+            return false;
+        }
+
         if self.exclusion_filter.is_excluded(path) {
             return false;
         }
@@ -118,16 +123,9 @@ impl DirectoryWalker {
 
     fn is_cyclic(&self, path: &Path) -> bool {
         if let Ok(canonical) = dunce::canonicalize(path) {
+            // Only check if we've already visited this exact path
             if self.visited.contains(&canonical) {
                 return true;
-            }
-
-            let mut current = canonical.as_path();
-            while let Some(parent) = current.parent() {
-                if self.visited.contains(parent) && parent != canonical {
-                    return true;
-                }
-                current = parent;
             }
         }
 

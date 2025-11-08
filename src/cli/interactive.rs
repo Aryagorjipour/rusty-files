@@ -1,5 +1,5 @@
-use crate::cli::output::OutputFormatter;
-use crate::core::{Result, SearchEngine};
+use crate::output::OutputFormatter;
+use rusty_files::core::{Result, SearchEngine};
 use crossterm::{
     event::{self, Event, KeyCode, KeyEvent},
     execute,

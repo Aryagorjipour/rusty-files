@@ -1,6 +1,6 @@
 use crate::core::config::SearchConfig;
 use crate::core::error::Result;
-use crate::core::types::{FileEntry, ProgressCallback};
+use crate::core::types::ProgressCallback;
 use crate::filters::ExclusionFilter;
 use crate::indexer::builder::IndexBuilder;
 use crate::indexer::metadata::MetadataExtractor;
@@ -12,7 +12,7 @@ use std::sync::Arc;
 pub struct IncrementalIndexer {
     database: Arc<Database>,
     config: Arc<SearchConfig>,
-    builder: Arc<IndexBuilder>,
+    _builder: Arc<IndexBuilder>,
 }
 
 impl IncrementalIndexer {
@@ -30,7 +30,7 @@ impl IncrementalIndexer {
         Self {
             database,
             config,
-            builder,
+            _builder: builder,
         }
     }
 
