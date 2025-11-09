@@ -1,0 +1,31 @@
+[server]
+host = "0.0.0.0"
+port = 8080
+workers = 8
+keep_alive = 75
+client_timeout = 30
+enable_cors = true
+cors_origins = ["*"]
+
+[database]
+path = "/data/filesearch.db"
+pool_size = 20
+max_connections = 200
+connection_timeout = 30
+
+[security]
+enable_auth = true
+jwt_secret = "${FILESEARCH_JWT_SECRET}"
+jwt_expiry = 3600
+rate_limit_per_minute = 1000
+
+[performance]
+max_search_results = 5000
+search_timeout_ms = 10000
+index_batch_size = 5000
+cache_size = 50000
+enable_compression = true
+
+[logging]
+level = "info"
+format = "json"
