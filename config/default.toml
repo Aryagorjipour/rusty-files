@@ -1,0 +1,31 @@
+[server]
+host = "127.0.0.1"
+port = 8080
+workers = 4
+keep_alive = 75
+client_timeout = 30
+enable_cors = true
+cors_origins = ["http://localhost:*"]
+
+[database]
+path = "./filesearch.db"
+pool_size = 10
+max_connections = 100
+connection_timeout = 30
+
+[security]
+enable_auth = false
+jwt_secret = "change-me-in-production"
+jwt_expiry = 3600
+rate_limit_per_minute = 100
+
+[performance]
+max_search_results = 1000
+search_timeout_ms = 5000
+index_batch_size = 1000
+cache_size = 10000
+enable_compression = true
+
+[logging]
+level = "info"
+format = "pretty"

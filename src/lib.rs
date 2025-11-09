@@ -5,6 +5,7 @@ pub mod search;
 pub mod storage;
 pub mod utils;
 pub mod watcher;
+pub mod server;
 
 pub use core::{
     DateFilter, ExclusionRule, ExclusionRuleType, FileEntry, IndexStats, MatchLocation, MatchMode,
@@ -21,4 +22,5 @@ pub use filters::ExclusionFilter;
 pub mod prelude {
     pub use crate::core::{Result, SearchConfig, SearchEngine};
     pub use crate::search::{Query, QueryParser};
+    pub use std::path::PathBuf;
 }

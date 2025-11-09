@@ -1,10 +1,10 @@
 [package]
 name = "rusty-files"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.70"
 authors = ["Rusty Files Contributors"]
-description = "A high-performance, cross-platform file search engine library"
+description = "A high-performance, cross-platform file search engine library with REST API"
 license = "MIT"
 repository = "https://github.com/Aryagorjipour/rusty-files"
 keywords = ["search", "files", "indexing", "filesystem"]
@@ -17,6 +17,10 @@ path = "src/lib.rs"
 [[bin]]
 name = "filesearch"
 path = "src/cli/main.rs"
+
+[[bin]]
+name = "filesearch-server"
+path = "src/server/main.rs"
 
 [dependencies]
 tokio = { version = "1.35", features = ["full"] }
@@ -66,10 +70,38 @@ sha2 = "0.10"
 
 probabilistic-collections = "0.7"
 
+# Web Server Dependencies
+actix = "0.13"
+actix-web = "4.4"
+actix-cors = "0.7"
+actix-ws = "0.2"
+actix-rt = "2.9"
+
+# Authentication & Security
+jsonwebtoken = "9.2"
+argon2 = "0.5"
+
+# Configuration Management
+config = "0.13"
+dotenv = "0.15"
+
+# Logging & Monitoring
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-actix-web = "0.7"
+
+# Async Utilities
+futures = "0.3"
+tokio-stream = "0.1"
+
+# Additional dependencies
+num_cpus = "1.16"
+
 [dev-dependencies]
 criterion = "0.5"
 tempfile = "3.8"
 proptest = "1.4"
+actix-test = "0.1"
 
 [[bench]]
 name = "indexing"
