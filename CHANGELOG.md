@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions workflow for automated releases
 - Comprehensive CHANGELOG.md for tracking changes
 
-## [0.1.0] - 2025-11-08
+## [0.2.0] - 2025-11-15
 
 ### Added
 - Initial release of Rusty Files
@@ -49,5 +49,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configuration examples
 - Architecture overview
 
-[Unreleased]: https://github.com/Aryagorjipour/rusty-files/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Aryagorjipour/rusty-files/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Aryagorjipour/rusty-files/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Aryagorjipour/rusty-files/releases/tag/v0.2.0
