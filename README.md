@@ -11,8 +11,8 @@
 <p align="center">
   <a href="https://github.com/Aryagorjipour/rusty-files/actions"><img src="https://github.com/Aryagorjipour/rusty-files/workflows/Rust/badge.svg" alt="Build Status"></a>
   <a href="https://github.com/Aryagorjipour/rusty-files/releases"><img src="https://img.shields.io/github/v/release/Aryagorjipour/rusty-files" alt="Latest Release"></a>
-  <a href="https://crates.io/crates/rusty-files"><img src="https://img.shields.io/crates/v/rusty-files" alt="Crates.io"></a>
-  <a href="https://crates.io/crates/rusty-files"><img src="https://img.shields.io/crates/d/rusty-files" alt="Downloads"></a>
+  <a href="https://crates.io/crates/srusty-files"><img src="https://img.shields.io/crates/v/srusty-files" alt="Crates.io"></a>
+  <a href="https://crates.io/crates/srusty-files"><img src="https://img.shields.io/crates/d/srusty-files" alt="Downloads"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-1.70%2B-blue.svg" alt="Rust 1.70+"></a>
 </p>
@@ -54,13 +54,13 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rusty-files = "0.1"
+srusty-files = "0.1"
 ```
 
 ### As a CLI Tool
 
 ```bash
-cargo install rusty-files
+cargo install srusty-files
 ```
 
 Or build from source:

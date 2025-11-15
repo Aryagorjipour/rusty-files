@@ -101,7 +101,7 @@ cargo login
 cargo publish
 
 # Verify on crates.io
-# https://crates.io/crates/rusty-files
+# https://crates.io/crates/srusty-files
 ```
 
 ## Versioning Strategy
